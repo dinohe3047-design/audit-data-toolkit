@@ -1,0 +1,3389 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Audit Data Toolkit</title>
+
+<style>
+:root {
+    --primary: #17365d;
+    --primary-2: #2563eb;
+    --primary-soft: #eff6ff;
+    --success: #15803d;
+    --success-soft: #f0fdf4;
+    --warning: #b45309;
+    --warning-soft: #fffbeb;
+    --danger: #dc2626;
+    --danger-soft: #fef2f2;
+    --text: #172033;
+    --muted: #64748b;
+    --border: #e2e8f0;
+    --surface: #ffffff;
+    --background: #f5f7fb;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Inter, Arial, sans-serif;
+    background: var(--background);
+    color: var(--text);
+}
+
+.app {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 32px 24px 60px;
+}
+
+/* HEADER */
+
+.title {
+    position: relative;
+    margin-bottom: 28px;
+    padding: 26px 30px;
+    background: linear-gradient(
+        135deg,
+        #17365d 0%,
+        #1e4d80 100%
+    );
+    border-radius: 18px;
+    color: #fff;
+    box-shadow:
+        0 12px 32px rgba(23,54,93,.18);
+    overflow: hidden;
+}
+
+.title::after {
+    content: "";
+    position: absolute;
+    width: 180px;
+    height: 180px;
+    right: -50px;
+    top: -70px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.07);
+}
+
+.title h1 {
+    position: relative;
+    z-index: 1;
+    margin: 0 0 8px;
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -.4px;
+}
+
+.title p {
+    position: relative;
+    z-index: 1;
+    margin: 0;
+    color: rgba(255,255,255,.78);
+    font-size: 14px;
+}
+
+/* CARD */
+
+.card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow:
+        0 4px 16px rgba(15,23,42,.04);
+}
+
+.card h3 {
+    margin: 0 0 18px;
+    font-size: 18px;
+    color: var(--text);
+}
+
+/* UPLOAD */
+
+.upload {
+    display: block;
+    border: 2px dashed #bfd0e5;
+    border-radius: 14px;
+    padding: 42px 24px;
+    text-align: center;
+    cursor: pointer;
+    background: #fbfdff;
+    transition: .2s ease;
+}
+
+.upload:hover {
+    border-color: var(--primary-2);
+    background: var(--primary-soft);
+    transform: translateY(-1px);
+}
+
+.upload input {
+    display: none;
+}
+
+.upload h3 {
+    margin: 12px 0 6px;
+    font-size: 18px;
+}
+
+.upload p {
+    margin: 0;
+    color: var(--muted);
+}
+
+/* MAPPING */
+
+.sheet-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+}
+
+.sheet-row select,
+.map-row select {
+    padding: 10px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 9px;
+    background: #fff;
+    color: var(--text);
+    outline: none;
+    transition: .15s;
+}
+
+.sheet-row select:focus,
+.map-row select:focus {
+    border-color: var(--primary-2);
+    box-shadow:
+        0 0 0 3px rgba(37,99,235,.1);
+}
+
+.detected {
+    padding: 12px 14px;
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin: 14px 0 18px;
+    font-size: 14px;
+}
+
+.mapping-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(2, minmax(0,1fr));
+    gap: 14px 24px;
+}
+
+.map-row {
+    display: grid;
+    grid-template-columns: 145px 1fr;
+    align-items: center;
+    gap: 12px;
+}
+
+.map-row label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+}
+
+/* BUTTON */
+
+.actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 22px;
+}
+
+.btn {
+    border: 0;
+    border-radius: 9px;
+    padding: 11px 18px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: .15s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+.btn-primary {
+    background: var(--primary-2);
+    color: #fff;
+    box-shadow:
+        0 5px 14px rgba(37,99,235,.18);
+}
+
+.btn-primary:hover {
+    background: #1d4ed8;
+}
+
+.btn-success {
+    background: #16a34a;
+    color: #fff;
+    box-shadow:
+        0 5px 14px rgba(22,163,74,.16);
+}
+
+.btn-success:hover {
+    background: #15803d;
+}
+
+.btn-gray {
+    background: #e2e8f0;
+    color: #334155;
+}
+
+.btn:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* RESULT */
+
+.stats {
+    display: grid;
+    grid-template-columns:
+        repeat(5, minmax(0,1fr));
+    gap: 14px;
+    margin-top: 16px;
+}
+
+.stat {
+    min-width: 0;
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 17px;
+}
+
+.stat small {
+    display: block;
+    color: var(--muted);
+    font-size: 12px;
+    margin-bottom: 8px;
+}
+
+.stat strong {
+    display: block;
+    font-size: 20px;
+    line-height: 1.2;
+    word-break: break-word;
+    color: var(--text);
+}
+
+.ok {
+    color: var(--success) !important;
+}
+
+.warn {
+    color: var(--warning) !important;
+}
+
+.error {
+    color: var(--danger) !important;
+}
+
+/* TABLE */
+
+.table-wrap {
+    overflow: auto;
+    max-height: 520px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+th,
+td {
+    padding: 11px 12px;
+    text-align: left;
+    white-space: nowrap;
+    border-bottom: 1px solid var(--border);
+}
+
+th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #eef3f9;
+    color: #334155;
+    font-weight: 700;
+}
+
+tbody tr:hover {
+    background: #f8fbff;
+}
+
+tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+td.money {
+    text-align: right;
+    font-variant-numeric:
+        tabular-nums;
+}
+
+/* ERROR CARD */
+
+#errorCard {
+    border-left: 4px solid #f59e0b;
+}
+
+#errorCard h3 {
+    color: #92400e;
+}
+
+/* UTIL */
+
+.hidden {
+    display: none !important;
+}
+
+/* RESPONSIVE */
+
+@media(max-width:1000px) {
+
+    .stats {
+        grid-template-columns:
+            repeat(2,1fr);
+    }
+
+}
+
+@media(max-width:800px) {
+
+    .app {
+        padding: 20px 14px 40px;
+    }
+
+    .title {
+        padding: 22px;
+    }
+
+    .mapping-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .map-row {
+        grid-template-columns:
+            130px 1fr;
+    }
+
+}
+
+@media(max-width:560px) {
+
+    .stats {
+        grid-template-columns: 1fr;
+    }
+
+    .map-row {
+        grid-template-columns: 1fr;
+    }
+
+}
+.app-footer {
+    margin-top: 32px;
+    padding: 22px 16px;
+    text-align: center;
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.8;
+    border-top: 1px solid #e2e8f0;
+}
+
+.app-footer a {
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.app-footer a:hover {
+    text-decoration: underline;
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+    <div class="title">
+
+    <div style="
+        font-size:12px;
+        font-weight:700;
+        letter-spacing:1.2px;
+        opacity:.7;
+        margin-bottom:8px;
+    ">
+        AUDIT DATA TOOLKIT
+    </div>
+
+    <h1>
+        Chuẩn hóa Nhật ký chung
+    </h1>
+
+    <p>
+        Chuyển dữ liệu kế toán về cấu trúc
+        1 Nợ – 1 Có và kiểm tra tính cân đối
+        trước khi sử dụng cho kiểm toán.
+    </p>
+
+</div>
+
+    <div class="card">
+        <label class="upload" id="dropZone">
+
+            <input
+                type="file"
+                id="fileInput"
+                accept=".xlsx,.xls"
+            >
+
+            <div style="font-size:42px">📊</div>
+
+            <h3>Chọn file Excel</h3>
+
+            <p>Kéo thả hoặc bấm để tải file lên</p>
+
+        </label>
+        <div id="fileInfo" class="hidden" style="margin-top:12px">
+    <div><b>File:</b> <span id="fileName"></span></div>
+    <div style="margin-top:6px">
+        <b>Loại dữ liệu:</b>
+        <span id="fileType">Chưa xác định</span>
+    </div>
+</div>
+    </div>
+
+    <div class="card hidden" id="mappingCard">
+
+        <h3>1. Kiểm tra cấu trúc file</h3>
+
+        <div class="sheet-row">
+
+            <label>
+                <b>Sheet:</b>
+            </label>
+
+            <select id="sheetSelect"></select>
+
+            <span id="headerInfo"></span>
+
+        </div>
+
+        <div
+            class="detected"
+            id="detectMessage">
+        </div>
+
+        <div class="mapping-grid">
+
+            <div class="map-row">
+                <label>Ngày ghi sổ</label>
+                <select id="mapNgayGS"></select>
+            </div>
+
+            <div class="map-row">
+                <label>Số hiệu CT</label>
+                <select id="mapSoCT"></select>
+            </div>
+
+            <div class="map-row">
+                <label>Ngày CT</label>
+                <select id="mapNgayCT"></select>
+            </div>
+
+            <div class="map-row">
+                <label>Diễn giải</label>
+                <select id="mapDienGiai"></select>
+            </div>
+
+            <div class="map-row">
+                <label>TK</label>
+                <select id="mapTK"></select>
+            </div>
+
+            <div class="map-row">
+                <label>TK đối ứng</label>
+                <select id="mapDoiUng"></select>
+            </div>
+
+            <div class="map-row">
+                <label>Phát sinh Nợ</label>
+                <select id="mapNo"></select>
+            </div>
+
+            <div class="map-row">
+                <label>Phát sinh Có</label>
+                <select id="mapCo"></select>
+            </div>
+
+        </div>
+
+        <div class="actions">
+
+            <button
+                class="btn btn-primary"
+                id="processBtn">
+
+                Chuẩn hóa dữ liệu
+
+            </button>
+
+        </div>
+
+    </div>
+
+    <div class="card hidden" id="resultCard">
+
+        <h3>2. Kết quả xử lý</h3>
+
+        <div class="stats">
+
+    <div class="stat">
+        <small>Tổng Nợ nguồn</small>
+        <strong id="originalDebit">0</strong>
+    </div>
+
+    <div class="stat">
+        <small>Tổng Có nguồn</small>
+        <strong id="originalCredit">0</strong>
+    </div>
+
+    <div class="stat">
+        <small>Tổng sau xử lý</small>
+        <strong id="totalAmount">0</strong>
+    </div>
+
+    <div class="stat">
+        <small>Chênh lệch</small>
+        <strong id="differenceAmount">0</strong>
+    </div>
+
+    <div class="stat">
+        <small>Kiểm tra</small>
+        <strong id="status">-</strong>
+    </div>
+
+</div>
+
+<div style="margin-top:12px;color:#6b7280;font-size:13px">
+    Dòng nguồn:
+    <b id="rawRows">0</b>
+    &nbsp; • &nbsp;
+    Dòng sau xử lý:
+    <b id="cleanRows">0</b>
+    &nbsp; • &nbsp;
+    Control total:
+    <b id="controlTotalText">Chưa xác định</b>
+</div>
+
+        <div class="actions">
+
+            <button
+                class="btn btn-primary"
+                id="previewBtn">
+
+                Xem dữ liệu
+
+            </button>
+
+            <button
+                class="btn btn-success"
+                id="exportBtn">
+
+                Xuất Excel
+
+            </button>
+
+        </div>
+
+    </div>
+
+    <div class="card hidden" id="errorCard">
+
+        <h3>⚠ Bút toán cần kiểm tra</h3>
+
+        <p style="color:#6b7280">
+            Các bút toán dưới đây không thể tự xác định đối ứng an toàn.
+        </p>
+
+        <div class="table-wrap">
+
+            <table>
+
+                <thead>
+                    <tr>
+                         <th>Số CT</th>
+                         <th>Ngày CT</th>
+                         <th>Diễn giải</th>
+                         <th>Nguyên nhân</th>
+                         <th>Số dòng</th>
+                         <th>Tổng Nợ</th>
+                         <th>Tổng Có</th>
+                         <th>Chênh lệch</th>
+                    </tr>
+                </thead>
+
+                <tbody id="errorBody"></tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+    <div class="card hidden" id="previewCard">
+
+        <h3>Dữ liệu sau chuẩn hóa</h3>
+
+        <div class="table-wrap">
+
+            <table>
+
+                <thead>
+                    <tr>
+                        <th>Ngày ghi sổ</th>
+                        <th>Số CT</th>
+                        <th>Ngày CT</th>
+                        <th>Diễn giải</th>
+                        <th>TK Nợ</th>
+                        <th>TK Có</th>
+                        <th>Số tiền</th>
+                    </tr>
+                </thead>
+
+                <tbody id="tableBody"></tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+let workbook = null;
+
+let currentRows = [];
+
+let headers = [];
+
+let headerRowIndex = 0;
+
+let cleanedData = [];
+let currentFileName = "";
+const $ = id => document.getElementById(id);
+
+
+function normalizeText(v) {
+
+    return String(v ?? "")
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/đ/g, "d")
+        .replace(/\s+/g, " ");
+
+}
+
+
+function numberValue(v) {
+
+    if (typeof v === "number") {
+        return v;
+    }
+
+    if (
+        v === null ||
+        v === undefined ||
+        v === ""
+    ) {
+        return 0;
+    }
+
+    let text = String(v)
+        .trim()
+        .replace(/\s/g, "");
+
+    if (/^\d{1,3}(\.\d{3})+$/.test(text)) {
+
+        text = text.replace(/\./g, "");
+
+    }
+
+    else if (/^\d{1,3}(,\d{3})+$/.test(text)) {
+
+        text = text.replace(/,/g, "");
+
+    }
+
+    else {
+
+        text = text.replace(/,/g, "");
+
+    }
+
+    return Number(text) || 0;
+
+}
+
+
+function excelDate(v) {
+
+    if (!v) {
+        return "";
+    }
+
+    if (typeof v === "number") {
+
+        const d = XLSX.SSF.parse_date_code(v);
+
+        if (d) {
+
+            return `${String(d.d).padStart(2,"0")}/${String(d.m).padStart(2,"0")}/${d.y}`;
+
+        }
+
+    }
+
+    return v;
+
+}
+
+
+const aliases = {
+
+    ngayGS: [
+        "ngay thang ghi so",
+        "ngay ghi so",
+        "posting date"
+    ],
+
+    soCT: [
+        "so hieu ct",
+        "so ct",
+        "so chung tu",
+        "so hieu chung tu",
+        "ma ct",
+        "ma chung tu",
+        "chung tu",
+        "voucher no",
+        "voucher number",
+        "voucher"
+    ],
+
+    ngayCT: [
+        "ngay thang ct",
+        "ngay ct",
+        "ngay chung tu",
+        "voucher date"
+    ],
+
+    dienGiai: [
+        "dien giai",
+        "noi dung",
+        "description",
+        "memo"
+    ],
+
+    tk: [
+        "so tai khoan",
+        "tai khoan",
+        "tk",
+        "account"
+    ],
+
+    doiUng: [
+        "tai khoan doi ung",
+        "tk doi ung",
+        "doi ung",
+        "contra account",
+        "corresponding account"
+    ],
+
+    no: [
+        "so tien no",
+        "phat sinh no",
+        "ps no",
+        "debit",
+        "debit amount"
+    ],
+
+    co: [
+        "so tien co",
+        "phat sinh co",
+        "ps co",
+        "credit",
+        "credit amount"
+    ]
+
+};
+
+
+function aliasMatchScore(text, list) {
+
+    let score = 0;
+
+    for (const a of list) {
+
+        const na = normalizeText(a);
+
+        if (text === na) {
+
+            score = Math.max(score, 5);
+
+        }
+
+        else if (text.includes(na)) {
+
+            score = Math.max(score, 3);
+
+        }
+
+    }
+
+    return score;
+
+}
+
+
+function detectHeaderRow(rows) {
+
+    let bestIndex = 0;
+
+    let bestScore = -1;
+
+    for (
+        let i = 0;
+        i < Math.min(rows.length, 20);
+        i++
+    ) {
+
+        let score = 0;
+
+        for (const cell of rows[i]) {
+
+            const t = normalizeText(cell);
+
+            if (!t) {
+                continue;
+            }
+
+            for (const key of Object.keys(aliases)) {
+
+                score += aliasMatchScore(
+                    t,
+                    aliases[key]
+                );
+
+            }
+
+        }
+
+        if (score > bestScore) {
+
+            bestScore = score;
+
+            bestIndex = i;
+
+        }
+
+    }
+
+    return bestIndex;
+
+}
+
+
+function findColumn(headers, list) {
+
+    let best = -1;
+
+    let bestScore = 0;
+
+    headers.forEach((h, i) => {
+
+        const t = normalizeText(h);
+
+        const score = aliasMatchScore(
+            t,
+            list
+        );
+
+        if (score > bestScore) {
+
+            bestScore = score;
+
+            best = i;
+
+        }
+
+    });
+
+    return best;
+
+}
+
+
+function fillSelect(
+    selectId,
+    headers,
+    selectedIndex
+) {
+
+    const sel = $(selectId);
+
+    sel.innerHTML =
+        '<option value="-1">-- Không sử dụng --</option>';
+
+    headers.forEach((h, i) => {
+
+        const op =
+            document.createElement("option");
+
+        op.value = i;
+
+        op.textContent =
+            `${String.fromCharCode(65 + i)} - ${h ?? ""}`;
+
+        if (i === selectedIndex) {
+
+            op.selected = true;
+
+        }
+
+        sel.appendChild(op);
+
+    });
+
+}
+
+
+function setupMapping() {
+
+    headerRowIndex =
+        detectHeaderRow(currentRows);
+
+    headers =
+        currentRows[headerRowIndex] || [];
+
+    $("headerInfo").textContent =
+        `Dòng tiêu đề phát hiện: ${headerRowIndex + 1}`;
+
+    const detected = {
+
+        ngayGS:
+            findColumn(
+                headers,
+                aliases.ngayGS
+            ),
+
+        soCT:
+            findColumn(
+                headers,
+                aliases.soCT
+            ),
+
+        ngayCT:
+            findColumn(
+                headers,
+                aliases.ngayCT
+            ),
+
+        dienGiai:
+            findColumn(
+                headers,
+                aliases.dienGiai
+            ),
+
+        tk:
+            findColumn(
+                headers,
+                aliases.tk
+            ),
+
+        doiUng:
+            findColumn(
+                headers,
+                aliases.doiUng
+            ),
+
+        no:
+            findColumn(
+                headers,
+                aliases.no
+            ),
+
+        co:
+            findColumn(
+                headers,
+                aliases.co
+            )
+
+    };
+
+let detectedFileType =
+    "Chưa xác định";
+
+
+if (
+    detected.tk !== -1 &&
+    detected.doiUng !== -1 &&
+    detected.no !== -1 &&
+    detected.co !== -1
+) {
+
+    detectedFileType =
+        "Có TK đối ứng";
+
+}
+
+
+else if (
+    detected.tk !== -1 &&
+    detected.doiUng === -1 &&
+    detected.no !== -1 &&
+    detected.co !== -1
+) {
+
+    detectedFileType =
+        "TK + Phát sinh Nợ/Có";
+
+}
+
+
+$("fileType")
+    .textContent =
+        detectedFileType;
+
+    fillSelect(
+        "mapNgayGS",
+        headers,
+        detected.ngayGS
+    );
+
+    fillSelect(
+        "mapSoCT",
+        headers,
+        detected.soCT
+    );
+
+    fillSelect(
+        "mapNgayCT",
+        headers,
+        detected.ngayCT
+    );
+
+    fillSelect(
+        "mapDienGiai",
+        headers,
+        detected.dienGiai
+    );
+
+    fillSelect(
+        "mapTK",
+        headers,
+        detected.tk
+    );
+
+    fillSelect(
+        "mapDoiUng",
+        headers,
+        detected.doiUng
+    );
+
+    fillSelect(
+        "mapNo",
+        headers,
+        detected.no
+    );
+
+    fillSelect(
+        "mapCo",
+        headers,
+        detected.co
+    );
+
+    const required = [
+        detected.tk,
+        detected.no,
+        detected.co
+    ];
+
+    if (
+        required.every(x => x !== -1)
+    ) {
+
+        $("detectMessage").innerHTML =
+            '<span class="ok">✓ Đã nhận diện được các cột chính. Kiểm tra lại mapping trước khi chạy.</span>';
+
+    }
+
+    else {
+
+        $("detectMessage").innerHTML =
+            '<span class="warn">⚠ Có cột chưa nhận diện được. Vui lòng chọn lại bằng dropdown bên dưới.</span>';
+
+    }
+
+    $("mappingCard")
+        .classList
+        .remove("hidden");
+
+    $("resultCard")
+        .classList
+        .add("hidden");
+
+    $("previewCard")
+        .classList
+        .add("hidden");
+
+    $("errorCard")
+        .classList
+        .add("hidden");
+
+}
+
+
+function loadSheet(sheetName) {
+
+    const ws =
+        workbook.Sheets[sheetName];
+
+    currentRows =
+        XLSX.utils.sheet_to_json(
+            ws,
+            {
+                header: 1,
+                defval: null,
+                raw: true
+            }
+        );
+
+    setupMapping();
+
+}
+
+
+function rowKey(r, c) {
+
+    const soCT =
+        c.soCT !== -1
+        ? normalizeText(r[c.soCT])
+        : "";
+
+    const ngayCT =
+        c.ngayCT !== -1
+        ? normalizeText(r[c.ngayCT])
+        : "";
+
+    const dienGiai =
+        c.dienGiai !== -1
+        ? normalizeText(r[c.dienGiai])
+        : "";
+
+    if (soCT && ngayCT) {
+
+        return `${soCT}|${ngayCT}`;
+
+    }
+
+    if (soCT) {
+
+        return `CT|${soCT}`;
+
+    }
+
+    if (ngayCT && dienGiai) {
+
+        return `${ngayCT}|${dienGiai}`;
+
+    }
+
+    return dienGiai ||
+        "KHONG_XAC_DINH";
+
+}
+
+
+function makeItem(
+    r,
+    c,
+    tkNo,
+    tkCo,
+    soTien
+) {
+
+    return {
+
+        ngayGS:
+            c.ngayGS !== -1
+            ? excelDate(r[c.ngayGS])
+            : "",
+
+        soCT:
+            c.soCT !== -1
+            ? (r[c.soCT] ?? "")
+            : "",
+
+        ngayCT:
+            c.ngayCT !== -1
+            ? excelDate(r[c.ngayCT])
+            : "",
+
+        dienGiai:
+            c.dienGiai !== -1
+            ? (r[c.dienGiai] ?? "")
+            : "",
+
+        tkNo:
+            String(
+                tkNo ?? ""
+            ).trim(),
+
+        tkCo:
+            String(
+                tkCo ?? ""
+            ).trim(),
+
+        soTien:
+            Number(soTien) || 0
+
+    };
+
+}
+
+
+function processWithContra(
+    body,
+    c
+) {
+
+    let result = [];
+    let errors = [];
+
+    let debits = [];
+    let credits = [];
+
+
+    /*
+    Tách nguồn thành bên Nợ và bên Có
+    */
+
+    body.forEach((r, index) => {
+
+        const no =
+            numberValue(
+                r[c.no]
+            );
+
+        const co =
+            numberValue(
+                r[c.co]
+            );
+
+        const tk =
+            String(
+                r[c.tk] ?? ""
+            ).trim();
+
+        const doiUng =
+            String(
+                r[c.doiUng] ?? ""
+            ).trim();
+
+
+        if (
+            !tk ||
+            !doiUng
+        ) {
+            return;
+        }
+
+
+        const item = {
+
+            r,
+            index,
+
+            soCT:
+                c.soCT !== -1
+                ? normalizeText(
+                    r[c.soCT]
+                )
+                : "",
+
+            ngayCT:
+                c.ngayCT !== -1
+                ? normalizeText(
+                    r[c.ngayCT]
+                )
+                : "",
+
+            tk,
+
+            doiUng
+
+        };
+
+
+        if (no !== 0) {
+
+            debits.push({
+                ...item,
+                amount: no
+            });
+
+        }
+
+
+        if (co !== 0) {
+
+            credits.push({
+                ...item,
+                amount: co
+            });
+
+        }
+
+    });
+
+
+    /*
+    Gom bên Có theo:
+    Số CT + Ngày CT + Số tiền
+    */
+
+    const creditMap =
+        new Map();
+
+
+    credits.forEach(cr => {
+
+        const key = [
+            cr.soCT,
+            cr.ngayCT,
+            cr.amount
+        ].join("|");
+
+
+        if (
+            !creditMap.has(key)
+        ) {
+
+            creditMap.set(
+                key,
+                []
+            );
+
+        }
+
+
+        creditMap
+            .get(key)
+            .push(cr);
+
+    });
+
+
+    const usedCredits =
+        new Set();
+
+
+    /*
+    Kiểm tra quan hệ cấp tài khoản.
+
+    Ví dụ:
+
+    dòng Nợ:
+    TK 111
+    Đối ứng 53111
+
+    dòng Có:
+    TK 531
+    Đối ứng 11111
+
+    => cùng một bút toán:
+
+    Nợ 11111
+    Có 53111
+    */
+
+    function accountRelated(
+        a,
+        b
+    ) {
+
+        a =
+            String(
+                a ?? ""
+            ).trim();
+
+        b =
+            String(
+                b ?? ""
+            ).trim();
+
+
+        if (
+            !a ||
+            !b
+        ) {
+            return false;
+        }
+
+
+        return (
+            a === b ||
+            a.startsWith(b) ||
+            b.startsWith(a)
+        );
+
+    }
+
+
+    /*
+    Chọn tài khoản chi tiết hơn
+    */
+
+    function detailedAccount(
+        a,
+        b
+    ) {
+
+        a =
+            String(
+                a ?? ""
+            ).trim();
+
+        b =
+            String(
+                b ?? ""
+            ).trim();
+
+
+        if (!a) {
+            return b;
+        }
+
+        if (!b) {
+            return a;
+        }
+
+
+        if (
+            a.startsWith(b)
+        ) {
+            return a;
+        }
+
+
+        if (
+            b.startsWith(a)
+        ) {
+            return b;
+        }
+
+
+        return a;
+
+    }
+
+
+    /*
+    Ghép từng dòng Nợ với dòng Có đối xứng
+    */
+
+    debits.forEach(d => {
+
+        const key = [
+            d.soCT,
+            d.ngayCT,
+            d.amount
+        ].join("|");
+
+
+        const possible =
+            creditMap.get(key) || [];
+
+
+        const candidates =
+            possible.filter(cr => {
+
+                if (
+                    usedCredits.has(
+                        cr.index
+                    )
+                ) {
+                    return false;
+                }
+
+
+                /*
+                TK Nợ tổng hợp
+                phải khớp cấp với
+                TK đối ứng ở dòng Có
+                */
+
+                const debitSideMatch =
+                    accountRelated(
+                        d.tk,
+                        cr.doiUng
+                    );
+
+
+                /*
+                TK Có tổng hợp
+                phải khớp cấp với
+                TK đối ứng ở dòng Nợ
+                */
+
+                const creditSideMatch =
+                    accountRelated(
+                        cr.tk,
+                        d.doiUng
+                    );
+
+
+                return (
+                    debitSideMatch &&
+                    creditSideMatch
+                );
+
+            });
+
+
+        /*
+        Ghép được duy nhất
+        */
+
+        if (
+            candidates.length === 1
+        ) {
+
+            const cr =
+                candidates[0];
+
+
+            usedCredits.add(
+                cr.index
+            );
+
+
+            const tkNo =
+                detailedAccount(
+                    d.tk,
+                    cr.doiUng
+                );
+
+
+            const tkCo =
+                detailedAccount(
+                    cr.tk,
+                    d.doiUng
+                );
+
+
+            result.push(
+
+                makeItem(
+                    d.r,
+                    c,
+                    tkNo,
+                    tkCo,
+                    d.amount
+                )
+
+            );
+
+
+            return;
+
+        }
+
+
+        /*
+        Không tìm được dòng Có phù hợp
+        */
+
+        if (
+            candidates.length === 0
+        ) {
+
+            errors.push({
+
+                ...getGroupMeta(
+                    [{r: d.r}],
+                    c
+                ),
+
+                reason:
+                    "Không tìm thấy dòng Có đối xứng",
+
+                sumNo:
+                    d.amount,
+
+                sumCo:
+                    0,
+
+                difference:
+                    d.amount
+
+            });
+
+
+            return;
+
+        }
+
+
+        /*
+        Có nhiều hơn 1 ứng viên
+        */
+
+        errors.push({
+
+            ...getGroupMeta(
+                [{r: d.r}],
+                c
+            ),
+
+            reason:
+                "Có nhiều dòng Có có thể đối ứng",
+
+            sumNo:
+                d.amount,
+
+            sumCo:
+                d.amount,
+
+            difference:
+                0
+
+        });
+
+    });
+
+
+    /*
+    Kiểm tra dòng Có chưa được ghép
+    */
+
+    credits.forEach(cr => {
+
+        if (
+            usedCredits.has(
+                cr.index
+            )
+        ) {
+            return;
+        }
+
+
+        errors.push({
+
+            ...getGroupMeta(
+                [{r: cr.r}],
+                c
+            ),
+
+            reason:
+                "Dòng Có chưa được ghép đối ứng",
+
+            sumNo:
+                0,
+
+            sumCo:
+                cr.amount,
+
+            difference:
+                -cr.amount
+
+        });
+
+    });
+
+
+    return {
+        result,
+        errors
+    };
+
+}
+function getGroupMeta(items, c) {
+
+    const firstRow =
+        items.length
+        ? items[0].r
+        : [];
+
+    return {
+
+        soCT:
+            c.soCT !== -1
+            ? (firstRow[c.soCT] ?? "")
+            : "",
+
+        ngayCT:
+            c.ngayCT !== -1
+            ? excelDate(firstRow[c.ngayCT])
+            : "",
+
+        dienGiai:
+            c.dienGiai !== -1
+            ? (firstRow[c.dienGiai] ?? "")
+            : "",
+
+        rowCount:
+            items.length
+
+    };
+
+}
+
+
+function findSourceTotal(rows, c) {
+
+    let totalNo = null;
+    let totalCo = null;
+
+    if (c.dienGiai === -1) {
+
+        return {
+            totalNo,
+            totalCo
+        };
+
+    }
+
+    for (const r of rows) {
+
+        const text =
+            normalizeText(
+                r[c.dienGiai]
+            );
+
+        const isTotal =
+            text.includes("cong tong phat sinh") ||
+            text.includes("tong phat sinh trong ky") ||
+            text === "tong phat sinh" ||
+            text === "tong phat sinh trong ky";
+
+        if (!isTotal) {
+            continue;
+        }
+
+        const no =
+            numberValue(
+                r[c.no]
+            );
+
+        const co =
+            numberValue(
+                r[c.co]
+            );
+
+        if (no > 0) {
+            totalNo = no;
+        }
+
+        if (co > 0) {
+            totalCo = co;
+        }
+
+    }
+
+    return {
+        totalNo,
+        totalCo
+    };
+
+}
+
+function processWithoutContra(
+    body,
+    c
+) {
+
+    const map = new Map();
+
+    body.forEach((r, index) => {
+
+        const no =
+            numberValue(r[c.no]);
+
+        const co =
+            numberValue(r[c.co]);
+
+        if (
+            no === 0 &&
+            co === 0
+        ) {
+
+            return;
+
+        }
+
+        const key =
+            rowKey(r, c);
+
+        if (!map.has(key)) {
+
+            map.set(
+                key,
+                []
+            );
+
+        }
+
+        map
+            .get(key)
+            .push({
+                r,
+                index
+            });
+
+    });
+
+    let result = [];
+
+    let errors = [];
+
+    map.forEach(
+        (items, key) => {
+
+            let debits = [];
+
+            let credits = [];
+
+            items.forEach(
+                ({r, index}) => {
+
+                    const tk =
+                        String(
+                            r[c.tk] ?? ""
+                        ).trim();
+
+                    const no =
+                        numberValue(
+                            r[c.no]
+                        );
+
+                    const co =
+                        numberValue(
+                            r[c.co]
+                        );
+
+                    if (!tk) {
+                        return;
+                    }
+
+                    if (no > 0) {
+
+                        debits.push({
+
+                            r,
+                            index,
+                            tk,
+                            amount: no
+
+                        });
+
+                    }
+
+                    if (co > 0) {
+
+                        credits.push({
+
+                            r,
+                            index,
+                            tk,
+                            amount: co
+
+                        });
+
+                    }
+
+                }
+            );
+
+            const sumNo =
+    debits.reduce(
+        (s, x) =>
+            s + x.amount,
+        0
+    );
+
+const sumCo =
+    credits.reduce(
+        (s, x) =>
+            s + x.amount,
+        0
+    );
+
+
+if (
+    Math.abs(
+        sumNo - sumCo
+    ) > 1
+) {
+
+    errors.push({
+
+        key,
+
+        ...getGroupMeta(items, c),
+
+        reason:
+            "Nợ và Có không cân",
+
+        sumNo,
+
+        sumCo,
+
+        difference:
+            sumNo - sumCo
+
+    });
+
+    return;
+}
+
+
+if (
+    !debits.length ||
+    !credits.length
+) {
+
+    errors.push({
+
+        key,
+
+        ...getGroupMeta(items, c),
+
+        reason:
+            "Thiếu bên Nợ hoặc Có",
+
+        sumNo,
+
+        sumCo,
+
+        difference:
+            sumNo - sumCo
+
+    });
+
+    return;
+}
+
+            function push(
+                d,
+                cr,
+                amount
+            ) {
+
+                result.push(
+
+                    makeItem(
+                        d.r,
+                        c,
+                        d.tk,
+                        cr.tk,
+                        amount
+                    )
+
+                );
+
+            }
+
+
+            if (
+                debits.length === 1 &&
+                credits.length === 1
+            ) {
+
+                push(
+                    debits[0],
+                    credits[0],
+                    debits[0].amount
+                );
+
+                return;
+
+            }
+
+
+            if (
+                credits.length === 1
+            ) {
+
+                debits.forEach(
+                    d => {
+
+                        push(
+                            d,
+                            credits[0],
+                            d.amount
+                        );
+
+                    }
+                );
+
+                return;
+
+            }
+
+
+            if (
+                debits.length === 1
+            ) {
+
+                credits.forEach(
+                    cr => {
+
+                        push(
+                            debits[0],
+                            cr,
+                            cr.amount
+                        );
+
+                    }
+                );
+
+                return;
+
+            }
+
+
+            let usedD =
+                new Set();
+
+            let usedC =
+                new Set();
+
+
+            debits.forEach(
+                (d, di) => {
+
+                    const ci =
+                        credits.findIndex(
+                            (cr, i) =>
+
+                                !usedC.has(i) &&
+
+                                Math.abs(
+                                    cr.amount -
+                                    d.amount
+                                ) < 1
+
+                        );
+
+                    if (ci !== -1) {
+
+                        usedD.add(di);
+
+                        usedC.add(ci);
+
+                        push(
+                            d,
+                            credits[ci],
+                            d.amount
+                        );
+
+                    }
+
+                }
+            );
+
+
+            let remD =
+                debits.filter(
+                    (x, i) =>
+                        !usedD.has(i)
+                );
+
+            let remC =
+                credits.filter(
+                    (x, i) =>
+                        !usedC.has(i)
+                );
+
+
+            if (
+                !remD.length &&
+                !remC.length
+            ) {
+
+                return;
+
+            }
+
+
+            if (
+                remC.length === 1 &&
+                remD.length
+            ) {
+
+                const s =
+                    remD.reduce(
+                        (a, x) =>
+                            a + x.amount,
+                        0
+                    );
+
+                if (
+                    Math.abs(
+                        s -
+                        remC[0].amount
+                    ) < 1
+                ) {
+
+                    remD.forEach(
+                        d => {
+
+                            push(
+                                d,
+                                remC[0],
+                                d.amount
+                            );
+
+                        }
+                    );
+
+                    return;
+
+                }
+
+            }
+
+
+            if (
+                remD.length === 1 &&
+                remC.length
+            ) {
+
+                const s =
+                    remC.reduce(
+                        (a, x) =>
+                            a + x.amount,
+                        0
+                    );
+
+                if (
+                    Math.abs(
+                        s -
+                        remD[0].amount
+                    ) < 1
+                ) {
+
+                    remC.forEach(
+                        cr => {
+
+                            push(
+                                remD[0],
+                                cr,
+                                cr.amount
+                            );
+
+                        }
+                    );
+
+                    return;
+
+                }
+
+            }
+
+
+            const debitByAmount =
+                new Map();
+
+            const creditByAmount =
+                new Map();
+
+
+            remD.forEach(d => {
+
+                const k =
+                    d.amount.toFixed(2);
+
+                if (
+                    !debitByAmount.has(k)
+                ) {
+
+                    debitByAmount.set(
+                        k,
+                        []
+                    );
+
+                }
+
+                debitByAmount
+                    .get(k)
+                    .push(d);
+
+            });
+
+
+            remC.forEach(cr => {
+
+                const k =
+                    cr.amount.toFixed(2);
+
+                if (
+                    !creditByAmount.has(k)
+                ) {
+
+                    creditByAmount.set(
+                        k,
+                        []
+                    );
+
+                }
+
+                creditByAmount
+                    .get(k)
+                    .push(cr);
+
+            });
+
+
+            debitByAmount.forEach(
+                (ds, k) => {
+
+                    const cs =
+                        creditByAmount
+                        .get(k) || [];
+
+                    while (
+                        ds.length &&
+                        cs.length
+                    ) {
+
+                        const d =
+                            ds.shift();
+
+                        const cr =
+                            cs.shift();
+
+                        push(
+                            d,
+                            cr,
+                            d.amount
+                        );
+
+                        remD =
+                            remD.filter(
+                                x =>
+                                    x !== d
+                            );
+
+                        remC =
+                            remC.filter(
+                                x =>
+                                    x !== cr
+                            );
+
+                    }
+
+                }
+            );
+
+
+            if (
+                !remD.length &&
+                !remC.length
+            ) {
+
+                return;
+
+            }
+
+
+const remainingNo =
+    remD.reduce(
+        (s, x) =>
+            s + x.amount,
+        0
+    );
+
+const remainingCo =
+    remC.reduce(
+        (s, x) =>
+            s + x.amount,
+        0
+    );
+
+errors.push({
+
+    key,
+
+    ...getGroupMeta(items, c),
+
+    reason:
+        "Không xác định được duy nhất đối ứng",
+
+    sumNo:
+        remainingNo,
+
+    sumCo:
+        remainingCo,
+
+    difference:
+        remainingNo - remainingCo
+
+});
+
+        }
+    );
+
+    return {
+        result,
+        errors
+    };
+
+}
+
+function handleExcelFile(file) {
+
+    if (!file) {
+        return;
+    }
+
+    const fileName =
+        file.name.toLowerCase();
+
+    if (
+        !fileName.endsWith(".xlsx") &&
+        !fileName.endsWith(".xls")
+    ) {
+
+        alert(
+            "Vui lòng chọn file Excel (.xlsx hoặc .xls)."
+        );
+
+        return;
+
+    }
+
+
+    currentFileName =
+        file.name;
+
+
+    $("fileName")
+        .textContent =
+            file.name;
+
+
+    $("fileInfo")
+        .classList
+        .remove(
+            "hidden"
+        );
+
+
+    const reader =
+        new FileReader();
+
+
+    reader.onload =
+        ev => {
+
+            const data =
+                new Uint8Array(
+                    ev.target.result
+                );
+
+
+            workbook =
+                XLSX.read(
+                    data,
+                    {
+                        type: "array"
+                    }
+                );
+
+
+            $("sheetSelect")
+                .innerHTML =
+                    "";
+
+
+            workbook
+                .SheetNames
+                .forEach(name => {
+
+                    const op =
+                        document
+                        .createElement(
+                            "option"
+                        );
+
+                    op.value =
+                        name;
+
+                    op.textContent =
+                        name;
+
+
+                    $("sheetSelect")
+                        .appendChild(
+                            op
+                        );
+
+                });
+
+
+            loadSheet(
+                workbook.SheetNames[0]
+            );
+
+        };
+
+
+    reader.readAsArrayBuffer(
+        file
+    );
+
+}
+
+$("fileInput")
+.addEventListener(
+    "change",
+    e => {
+
+        handleExcelFile(
+            e.target.files[0]
+        );
+
+    }
+);
+
+const dropZone =
+    $("dropZone");
+
+
+dropZone.addEventListener(
+    "dragover",
+    e => {
+
+        e.preventDefault();
+
+        dropZone.style.borderColor =
+            "#2563eb";
+
+        dropZone.style.background =
+            "#f8fbff";
+
+    }
+);
+
+
+dropZone.addEventListener(
+    "dragleave",
+    () => {
+
+        dropZone.style.borderColor =
+            "";
+
+        dropZone.style.background =
+            "";
+
+    }
+);
+
+
+dropZone.addEventListener(
+    "drop",
+    e => {
+
+        e.preventDefault();
+
+        dropZone.style.borderColor =
+            "";
+
+        dropZone.style.background =
+            "";
+
+
+        const file =
+            e.dataTransfer.files[0];
+
+
+        handleExcelFile(
+            file
+        );
+
+    }
+);
+
+$("sheetSelect")
+.addEventListener(
+    "change",
+    e => {
+
+        loadSheet(
+            e.target.value
+        );
+
+    }
+);
+
+
+$("processBtn")
+.addEventListener(
+    "click",
+    () => {
+
+        const c = {
+
+            ngayGS:
+                Number(
+                    $("mapNgayGS").value
+                ),
+
+            soCT:
+                Number(
+                    $("mapSoCT").value
+                ),
+
+            ngayCT:
+                Number(
+                    $("mapNgayCT").value
+                ),
+
+            dienGiai:
+                Number(
+                    $("mapDienGiai").value
+                ),
+
+            tk:
+                Number(
+                    $("mapTK").value
+                ),
+
+            doiUng:
+                Number(
+                    $("mapDoiUng").value
+                ),
+
+            no:
+                Number(
+                    $("mapNo").value
+                ),
+
+            co:
+                Number(
+                    $("mapCo").value
+                )
+
+        };
+
+
+if (
+    c.tk === -1 ||
+    c.no === -1 ||
+    c.co === -1
+) {
+
+    alert(
+        "Cần chọn TK, Phát sinh Nợ và Phát sinh Có."
+    );
+
+    return;
+}
+
+
+if (
+    c.doiUng !== -1 &&
+    c.soCT === -1
+) {
+
+    alert(
+        "File có TK đối ứng nhưng chưa xác định được cột Số chứng từ.\n\n" +
+        "Hãy chọn cột Số chứng từ trước khi chuẩn hóa để tránh ghép nhầm các bút toán cùng ngày và cùng số tiền."
+    );
+
+    return;
+}
+
+        const allRows =
+            currentRows.slice(
+                headerRowIndex + 1
+            );
+
+
+        const sourceTotal =
+            findSourceTotal(
+                allRows,
+                c
+            );
+
+
+        const body =
+            allRows.filter(r => {
+
+                const no =
+                    numberValue(
+                        r[c.no]
+                    );
+
+                const co =
+                    numberValue(
+                        r[c.co]
+                    );
+
+
+                if (
+                    no === 0 &&
+                    co === 0
+                ) {
+
+                    return false;
+
+                }
+
+
+                if (
+                    c.dienGiai !== -1
+                ) {
+
+                    const text =
+                        normalizeText(
+                            r[c.dienGiai]
+                        );
+
+
+                    const isTotal =
+                        text.includes(
+                            "cong tong phat sinh"
+                        ) ||
+
+                        text.includes(
+                            "tong phat sinh trong ky"
+                        ) ||
+
+                        text ===
+                            "tong phat sinh";
+
+
+                    if (isTotal) {
+
+                        return false;
+
+                    }
+
+                }
+
+
+                return true;
+
+            });
+
+
+        const rawDebit =
+            body.reduce(
+                (sum, r) =>
+
+                    sum +
+                    numberValue(
+                        r[c.no]
+                    ),
+
+                0
+            );
+
+
+        const rawCredit =
+            body.reduce(
+                (sum, r) =>
+
+                    sum +
+                    numberValue(
+                        r[c.co]
+                    ),
+
+                0
+            );
+
+
+        let processed;
+
+
+        if (
+            c.doiUng !== -1
+        ) {
+
+            processed =
+                processWithContra(
+                    body,
+                    c
+                );
+
+        }
+
+        else {
+
+            processed =
+                processWithoutContra(
+                    body,
+                    c
+                );
+
+        }
+
+
+        cleanedData =
+            processed.result;
+
+
+        const totalClean =
+            cleanedData.reduce(
+                (sum, r) =>
+
+                    sum +
+                    r.soTien,
+
+                0
+            );
+
+
+        let controlTotal = null;
+
+        let controlSource =
+            "Chưa xác định";
+
+
+        /*
+        Ưu tiên 1:
+        Tổng phát sinh có sẵn trong file
+        */
+
+        if (
+            sourceTotal.totalNo !== null
+        ) {
+
+            controlTotal =
+                sourceTotal.totalNo;
+
+            controlSource =
+                "Tổng phát sinh nguồn";
+
+        }
+
+        else if (
+            sourceTotal.totalCo !== null
+        ) {
+
+            controlTotal =
+                sourceTotal.totalCo;
+
+            controlSource =
+                "Tổng phát sinh nguồn";
+
+        }
+
+
+        /*
+        Ưu tiên 2:
+        File không có TK đối ứng
+        và Nợ = Có
+        */
+
+        else if (
+    Math.abs(
+        rawDebit -
+        rawCredit
+    ) < 1
+) {
+
+    controlTotal =
+        rawDebit;
+
+    controlSource =
+        "Tổng Nợ/Có nguồn";
+
+}
+
+
+        /*
+        Ưu tiên 3:
+        File có TK đối ứng,
+        phát hiện dữ liệu phản chiếu 2 lần
+        */
+
+        else if (
+            c.doiUng !== -1 &&
+            Math.abs(
+                rawDebit -
+                rawCredit
+            ) < 1 &&
+            Math.abs(
+                rawDebit -
+                totalClean * 2
+            ) < 1
+        ) {
+
+            controlTotal =
+                totalClean;
+
+            controlSource =
+                "Phát hiện Sổ Cái phản chiếu 2 lần";
+
+        }
+
+
+        let difference = null;
+
+
+        if (
+            controlTotal !== null
+        ) {
+
+            difference =
+                totalClean -
+                controlTotal;
+
+        }
+
+
+        $("originalDebit")
+            .textContent =
+                rawDebit
+                .toLocaleString(
+                    "vi-VN"
+                );
+
+
+        $("originalCredit")
+            .textContent =
+                rawCredit
+                .toLocaleString(
+                    "vi-VN"
+                );
+
+
+        $("totalAmount")
+            .textContent =
+                totalClean
+                .toLocaleString(
+                    "vi-VN"
+                );
+
+
+        $("differenceAmount")
+            .textContent =
+                difference !== null
+                ? difference
+                    .toLocaleString(
+                        "vi-VN"
+                    )
+                : "-";
+
+
+        $("rawRows")
+            .textContent =
+                body.length
+                .toLocaleString(
+                    "vi-VN"
+                );
+
+
+        $("cleanRows")
+            .textContent =
+                cleanedData.length
+                .toLocaleString(
+                    "vi-VN"
+                );
+
+
+        $("controlTotalText")
+            .textContent =
+                controlTotal !== null
+
+                ? `${controlTotal.toLocaleString("vi-VN")} (${controlSource})`
+
+                : "Chưa xác định";
+
+
+        /*
+        Trạng thái kiểm tra
+        */
+
+        if (
+            processed.errors.length > 0
+        ) {
+
+            $("status")
+                .textContent =
+                    `⚠ ${processed.errors.length} BÚT TOÁN CẦN KIỂM TRA`;
+
+            $("status")
+                .className =
+                    "warn";
+
+        }
+
+        else if (
+            controlTotal !== null &&
+            Math.abs(
+                totalClean -
+                controlTotal
+            ) < 1
+        ) {
+
+            if (
+                controlSource ===
+                "Phát hiện Sổ Cái phản chiếu 2 lần"
+            ) {
+
+                $("status")
+                    .textContent =
+                        "✓ KHỚP - ĐÃ LOẠI TRÙNG";
+
+            }
+
+            else {
+
+                $("status")
+                    .textContent =
+                        "✓ KHỚP DỮ LIỆU";
+
+            }
+
+            $("status")
+                .className =
+                    "ok";
+
+        }
+
+        else if (
+            controlTotal !== null
+        ) {
+
+            $("status")
+                .textContent =
+                    "⚠ CÓ CHÊNH LỆCH TỔNG";
+
+            $("status")
+                .className =
+                    "error";
+
+        }
+
+        else {
+
+            $("status")
+                .textContent =
+                    "⚠ CHƯA CÓ CONTROL TOTAL";
+
+            $("status")
+                .className =
+                    "warn";
+
+        }
+
+
+        /*
+        Hiển thị bảng lỗi
+        */
+
+        const errorCard =
+            $("errorCard");
+
+        const errorBody =
+            $("errorBody");
+
+
+        errorBody.innerHTML =
+            "";
+
+
+        if (
+            processed.errors.length
+        ) {
+
+            processed.errors
+                .forEach(e => {
+
+                    const tr =
+                        document
+                        .createElement(
+                            "tr"
+                        );
+
+
+                    tr.innerHTML = `
+
+                        <td>
+                            ${e.soCT ?? ""}
+                        </td>
+
+                        <td>
+                            ${e.ngayCT ?? ""}
+                        </td>
+
+                        <td>
+                            ${e.dienGiai ?? ""}
+                        </td>
+
+                        <td>
+                            ${e.reason ?? ""}
+                        </td>
+
+                        <td class="money">
+                            ${e.rowCount ?? "-"}
+                        </td>
+
+                        <td class="money">
+                            ${
+                                e.sumNo !== undefined
+                                ? e.sumNo.toLocaleString("vi-VN")
+                                : "-"
+                            }
+                        </td>
+
+                        <td class="money">
+                            ${
+                                e.sumCo !== undefined
+                                ? e.sumCo.toLocaleString("vi-VN")
+                                : "-"
+                            }
+                        </td>
+
+                        <td class="money">
+                            ${
+                                e.difference !== undefined
+                                ? e.difference.toLocaleString("vi-VN")
+                                : "-"
+                            }
+                        </td>
+
+                    `;
+
+
+                    errorBody
+                        .appendChild(
+                            tr
+                        );
+
+                });
+
+
+            errorCard
+                .classList
+                .remove(
+                    "hidden"
+                );
+
+        }
+
+        else {
+
+            errorCard
+                .classList
+                .add(
+                    "hidden"
+                );
+
+        }
+
+
+        console.log(
+            "Tổng Nợ nguồn:",
+            rawDebit
+        );
+
+
+        console.log(
+            "Tổng Có nguồn:",
+            rawCredit
+        );
+
+
+        console.log(
+            "Control total:",
+            controlTotal
+        );
+
+
+        console.log(
+            "Nguồn control:",
+            controlSource
+        );
+
+
+        console.log(
+            "Tổng sau xử lý:",
+            totalClean
+        );
+
+
+        console.log(
+            "Chênh lệch:",
+            difference
+        );
+
+
+        console.table(
+            processed.errors
+        );
+
+
+        $("resultCard")
+            .classList
+            .remove(
+                "hidden"
+            );
+
+
+        $("previewCard")
+            .classList
+            .add(
+                "hidden"
+            );
+
+    }
+);
+
+$("previewBtn")
+.addEventListener(
+    "click",
+    () => {
+
+        $("tableBody")
+            .innerHTML = "";
+
+        cleanedData
+            .slice(0, 500)
+            .forEach(r => {
+
+                const tr =
+                    document
+                    .createElement(
+                        "tr"
+                    );
+
+                tr.innerHTML = `
+
+                    <td>
+                        ${r.ngayGS}
+                    </td>
+
+                    <td>
+                        ${r.soCT}
+                    </td>
+
+                    <td>
+                        ${r.ngayCT}
+                    </td>
+
+                    <td>
+                        ${r.dienGiai}
+                    </td>
+
+                    <td>
+                        ${r.tkNo}
+                    </td>
+
+                    <td>
+                        ${r.tkCo}
+                    </td>
+
+                    <td class="money">
+                        ${r.soTien.toLocaleString("vi-VN")}
+                    </td>
+
+                `;
+
+                $("tableBody")
+                    .appendChild(tr);
+
+            });
+
+
+        $("previewCard")
+            .classList
+            .remove("hidden");
+
+    }
+);
+
+
+$("exportBtn")
+.addEventListener(
+    "click",
+    () => {
+
+        if (
+            !cleanedData.length
+        ) {
+
+            alert(
+                "Chưa có dữ liệu để xuất."
+            );
+
+            return;
+
+        }
+
+
+        const exportData =
+            cleanedData.map(
+                r => ({
+
+                    "Ngày ghi sổ":
+                        r.ngayGS,
+
+                    "Số hiệu CT":
+                        r.soCT,
+
+                    "Ngày CT":
+                        r.ngayCT,
+
+                    "Diễn giải":
+                        r.dienGiai,
+
+                    "TK Nợ":
+                        r.tkNo,
+
+                    "TK Có":
+                        r.tkCo,
+
+                    "Số tiền":
+                        r.soTien
+
+                })
+            );
+
+
+        const ws =
+            XLSX.utils
+            .json_to_sheet(
+                exportData
+            );
+        // Dòng dữ liệu bắt đầu từ dòng 2
+const lastDataRow = exportData.length + 1;
+
+// Dòng SUBTOTAL nằm ngay sau dữ liệu
+const subtotalRow = lastDataRow + 1;
+
+// Ghi nhãn SUBTOTAL
+ws[`F${subtotalRow}`] = {
+    t: "s",
+    v: "SUBTOTAL"
+};
+
+// Công thức tổng cột Số tiền (cột G)
+ws[`G${subtotalRow}`] = {
+    t: "n",
+    f: `SUBTOTAL(9,G2:G${lastDataRow})`
+};
+
+// Mở rộng vùng sheet để bao gồm dòng SUBTOTAL
+ws["!ref"] =
+    XLSX.utils.encode_range({
+        s: {r: 0, c: 0},
+        e: {r: subtotalRow - 1, c: 6}
+    });
+
+// Thêm filter cho vùng dữ liệu
+ws["!autofilter"] = {
+    ref: `A1:G${lastDataRow}`
+};
+
+        ws["!cols"] = [
+
+            {wch:14},
+
+            {wch:15},
+
+            {wch:14},
+
+            {wch:60},
+
+            {wch:12},
+
+            {wch:12},
+
+            {wch:18}
+
+        ];
+
+
+        const wb =
+            XLSX.utils
+            .book_new();
+
+
+        XLSX.utils
+            .book_append_sheet(
+                wb,
+                ws,
+                "NKC_1No_1Co"
+            );
+
+
+        const baseName =
+    currentFileName
+        .replace(/\.(xlsx|xls)$/i, "");
+
+
+XLSX.writeFile(
+    wb,
+    `${baseName}_1No_1Co.xlsx`
+);
+
+    }
+);
+</script>
+
+<footer class="app-footer">
+
+    <div>
+        © 2026 Audit Data Toolkit
+    </div>
+
+    <div>
+        Phát triển bởi <b>Yến Linh</b>
+    </div>
+
+    <div>
+        Nếu gặp vấn đề, vui lòng liên hệ:
+        <a href="https://zalo.me/0866873913" target="_blank">Zalo</a>
+        <span>•</span>
+        <a href="mailto:dinohe3047@gmail.com">dinohe3047@gmail.com</a>
+    </div>
+
+</footer>
+
+</body>
+</html>
